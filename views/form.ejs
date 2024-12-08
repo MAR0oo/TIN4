@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formularz</title>
+    <link rel="stylesheet" href="stylesheets/style.css">
+</head>
+<body>
+<div class="form-container">
+    <h2>Formularz</h2>
+    <form id="form">
+        <div class="form-field">
+            <label for="firstName">Imię</label>
+            <input type="text" id="firstName" name="firstName" placeholder="Imię" required>
+        </div>
+        <div class="form-field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Email" required>
+        </div>
+        <div class="form-field">
+            <label for="birthDate">Data urodzenia</label>
+            <input type="date" id="birthDate" name="birthDate" required>
+        </div>
+        <button type="submit">Wyślij</button>
+    </form>
+    <div id="result"></div>
+
+    <div class="data-container">
+        <h2>Nowe dane:</h2>
+        <div id="data-output">
+            <p>Oczekiwanie na dane...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const formData = {
+            firstName: document.getElementById('firstName').value,
+            email: document.getElementById('email').value,
+            birthDate: document.getElementById('birthDate').value,
+        };
+
+        try {
+            const response = await fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                document.getElementById('result').innerHTML = `
+                    <p><strong>Imię:</strong> ${result.firstName}</p>
+                    <p><strong>Email:</strong> ${result.email}</p>
+                    <p><strong>Data urodzenia:</strong> ${result.birthDate}</p>
+                    <p><strong>Dni do następnych urodzin:</strong> ${result.daysToNextBirthday}</p>
+                `;
+            } else {
+                document.getElementById('result').innerHTML = `
+                    <h3>Błędy walidacji:</h3>
+                    <ul>${result.errors.map(err => `<li>${err}</li>`).join('')}</ul>
+                `;
+            }
+        } catch (error) {
+            document.getElementById('result').innerHTML = `<p>Wystąpił błąd: ${error.message}</p>`;
+        }
+    });
+
+    async function fetchNewData() {
+        try {
+            const response = await fetch('/new-data');
+            const data = await response.json();
+
+            const dataOutput = document.getElementById('data-output');
+            dataOutput.innerHTML = `
+                <p><strong>Losowa liczba:</strong> ${data.randomNumber}</p>
+                <p><strong>Czas:</strong> ${data.timestamp}</p>
+            `;
+        } catch (error) {
+            console.error('Błąd podczas pobierania nowych danych:', error);
+        }
+    }
+
+    setInterval(fetchNewData, 5000);
+
+    fetchNewData();
+</script>
+</body>
+</html>
